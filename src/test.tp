@@ -1,0 +1,22 @@
+[My Page Title]
+author = "John Doe"
+date   =  2024-02-03
+
+[[Chapter 1]]
+
+[[[Subpart 2]]]
+
+"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quae cum dixisset, finem ille. Simus igitur contenti his. Duo Reges: constructio interrete. Longum est enim ad omnia respondere, quae a te dicta sunt. Illum mallem levares, quo optimum atque humanissimum virum, Cn. Quid, de quo nulla dissensio est? "
+
+[[[subpart 3]]]
+
+"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quae cum dixisset, finem ille. Simus igitur contenti his. Duo Reges: constructio interrete. Longum est enim ad omnia respondere, quae a te dicta sunt. Illum mallem levares, quo optimum atque humanissimum virum, Cn. Quid, de quo nulla dissensio est? "
+
+{My Table}
+Row_1 = {1,2,3,4,5}
+Row_2 = {a,b,c,d,e}
+Row_3 = {0x001, 0x002, 0x003, 0x004, 0x005}
+
+[[[[subpart 4]]]]
+
+"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quae cum dixisset, finem ille. Simus igitur contenti his. Duo Reges: constructio interrete. Longum est enim ad omnia respondere, quae a te dicta sunt. Illum mallem levares, quo optimum atque humanissimum virum, Cn. Quid, de quo nulla dissensio est? "
