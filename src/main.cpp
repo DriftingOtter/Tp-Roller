@@ -6,6 +6,8 @@
 
 int check_for_toml (std::string file_path);
 int check_args (int argc, char* argv[]);
+std::string regex_toml_table_to_html_heading(std::string current_line);
+std::string transpile_to_html(std::string current_line);
 std::string read_file(std::string file_path);
 
 int main(int argc, char* argv[]) {
@@ -20,9 +22,8 @@ int main(int argc, char* argv[]) {
 }
 
 int check_for_toml (std::string file_path){
-
-    // TODO: Make this only work on .toml at the end
-    std::regex toml_pattern("\\.toml$", std::regex_constants::icase);
+    // {.} is any string before + {\.tp$} means has to have .tp as the end
+    std::regex toml_pattern(R"(.+\.tp$)");
 
     if (!std::regex_search(file_path, toml_pattern)){
         return -1;
@@ -34,14 +35,14 @@ int check_for_toml (std::string file_path){
 int check_args (int argc, char* argv[]){
     // Check for any args
     if (argc == 1){
-        throw std::logic_error("TP_Roller: $ TP_Roller <name_of_toml_file>");
+        throw std::logic_error("TP Roller: $ TP_Roller <name_of_tp_file>");
         return -1;
     }
 
     // Check for .toml file
     std::string transpile_file = argv[1];
     if (check_for_toml(transpile_file) == -1){
-        throw std::logic_error("TP_Roller: file given is not a .toml file.");
+        throw std::logic_error("TP Roller: file given is not a .tp file.");
         return -1;
     }
 
@@ -72,7 +73,6 @@ std::string regex_toml_table_to_html_heading(std::string current_line) {
         return "<h6>" + match[1].str() + "</h6>";
     }
 
-    // If not a TOML-style heading, return the data as is
     return current_line;
 }
 
@@ -97,4 +97,3 @@ std::string read_file(std::string file_path) {
 
     return file_data;
 }
-
