@@ -4,8 +4,12 @@
 
 > A Toml -> Html transpiler for quick webpage production.
 
-W.I.P
+## Why?
 
-# Acknowledgements
-- For .toml parser
-[toml11](https://github.com/ToruNiina/toml11?tab=readme-ov-file)
+## How does it work?
+
+## Status
+
+## Acknowledgements
+
+- Creator := Daksh Kaul // DriftingOtter
