@@ -1,22 +1,60 @@
 [My Page Title]
-author = "John Doe"
-date   =  2024-02-03
+author   = John Doe
+date     = 2024-02-03
+time     = 1:23:45 AM
+location = India
 
 [[Chapter 1]]
 
-[[[Subpart 2]]]
+[[[Sub-part 2]]]
 
-"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quae cum dixisset, finem ille. Simus igitur contenti his. Duo Reges: constructio interrete. Longum est enim ad omnia respondere, quae a te dicta sunt. Illum mallem levares, quo optimum atque humanissimum virum, Cn. Quid, de quo nulla dissensio est? "
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quae cum dixisset, finem ille. Simus igitur contenti his. Duo Reges: constructio interrete. Longum est enim ad omnia respondere, quae a te dicta sunt. Illum mallem levares, quo optimum atque humanissimum virum, Cn. Quid, de quo nulla dissensio est?
 
-[[[subpart 3]]]
+[[[Sub-part 3]]]
 
-"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quae cum dixisset, finem ille. Simus igitur contenti his. Duo Reges: constructio interrete. Longum est enim ad omnia respondere, quae a te dicta sunt. Illum mallem levares, quo optimum atque humanissimum virum, Cn. Quid, de quo nulla dissensio est? "
+- Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+- Quae cum dixisset, finem ille. Simus igitur contenti his. 
+- Duo Reges: constructio interrete. 
 
-{My Table}
-Row_1 = {1,2,3,4,5}
-Row_2 = {a,b,c,d,e}
-Row_3 = {0x001, 0x002, 0x003, 0x004, 0x005}
+1. Longum est enim ad omnia respondere, quae a te dicta sunt. 
+2. Illum mallem levares, quo optimum atque humanissimum virum, Cn. 
+3. Quid, de quo nulla dissensio est?
 
-[[[[subpart 4]]]]
+a. Semper enim ita adsumit aliquid, ut ea, quae prima dederit, non deserat. 
+b. Quodsi vultum tibi, si incessum fingeres, quo gravior viderere, tui similis. 
+c. Sed erat aequius Triarium aliquid de dissensione nostra iudicare.
 
-"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quae cum dixisset, finem ille. Simus igitur contenti his. Duo Reges: constructio interrete. Longum est enim ad omnia respondere, quae a te dicta sunt. Illum mallem levares, quo optimum atque humanissimum virum, Cn. Quid, de quo nulla dissensio est? "
+[[[Sub-part 4]]]
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quae cum dixisset, finem ille. Simus igitur contenti his. Duo Reges: constructio interrete. Longum est enim ad omnia respondere, quae a te dicta sunt. Illum mallem levares, quo optimum atque humanissimum virum, Cn. Quid, de quo nulla dissensio est? 
+
+[My Table]
+Colomn_1 = {1,2,3,4,5} 
+Colomn_2 = {a,b,c,d,e}
+Colomn_3 = {0x001, 0x002, 0x003, 0x004, 0x005}
+
+[[[[Sub-part 5]]]]
+
+[img="~/path/of/file.png"]
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quae cum dixisset, finem ille. Simus igitur contenti his. Duo Reges: constructio interrete. Longum est enim ad omnia respondere, quae a te dicta sunt. Illum mallem levares, quo optimum atque humanissimum virum, Cn. Quid, de quo nulla dissensio est?
+
+~~~ c++
+#include <iostream>
+
+int main(int argc, char* argv){
+
+    return 0;
+}
+~~~
+
+[[Chapter 2]]
+
+[vid="~/path/of/file.mp4"]
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quae cum dixisset, finem ille. Simus igitur contenti his. Duo Reges: constructio interrete. Longum est enim ad omnia respondere, quae a te dicta sunt. Illum mallem levares, quo optimum atque humanissimum virum, Cn. Quid, de quo nulla dissensio est?
+
+[aud="~/path/of/file.mp3"]
+
+[url="www.Lorem-ipsum-dolor-sit-amet-consectetur-adipiscing-elit.com"]
+
