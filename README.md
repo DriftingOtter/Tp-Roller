@@ -2,7 +2,7 @@
 
 # Tp Roller
 
-> A Toml -> Html transpiler for quick webpage production.
+> An easy to read & write documentation format for quick webpage production.
 
 ## Why?
 
