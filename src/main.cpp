@@ -6,7 +6,11 @@
 
 int check_for_toml (std::string file_path);
 int check_args (int argc, char* argv[]);
-std::string regex_toml_table_to_html_heading(std::string current_line);
+std::string regex_tp_table_to_html_heading(std::string current_line);
+std::string regex_tp_image_to_html_image_tag(std::string current_line);
+std::string regex_tp_video_to_html_video_tag(std::string current_line);
+std::string regex_tp_audio_to_html_audio_tag(std::string current_line);
+std::string regex_tp_href_to_html_href_tag(std::string current_line);
 std::string transpile_to_html(std::string current_line);
 std::string read_file(std::string file_path);
 
@@ -49,13 +53,13 @@ int check_args (int argc, char* argv[]){
     return 0;
 }
 
-std::string regex_toml_table_to_html_heading(std::string current_line) {
-    std::regex h1_pattern(R"(\[([^\]]*)\])");
-    std::regex h2_pattern(R"(\[\[([^\]]*)\]\])");
-    std::regex h3_pattern(R"(\[\[\[([^\]]*)\]\]\])");
-    std::regex h4_pattern(R"(\[\[\[\[([^\]]*)\]\]\]\])");
-    std::regex h5_pattern(R"(\[\[\[\[\[([^\]]*)\]\]\]\]\])");
-    std::regex h6_pattern(R"(\[\[\[\[\[\[([^\]]*)\]\]\]\]\]\])");
+std::string regex_tp_table_to_html_heading(std::string current_line) {
+    std::regex h1_pattern(R"(\[([^]\[]*([^u]|u[^r]|ur[^l])[^=]*[^a]|u[^r]|ur[^l]|r[^l]|l[^=])\])");
+    std::regex h2_pattern(R"(\[\[([^]\[]*([^u]|u[^r]|ur[^l])[^=]*[^a]|u[^r]|ur[^l]|r[^l]|l[^=])\]\])");
+    std::regex h3_pattern(R"(\[\[\[([^]\[]*([^u]|u[^r]|ur[^l])[^=]*[^a]|u[^r]|ur[^l]|r[^l]|l[^=])\]\]\])");
+    std::regex h4_pattern(R"(\[\[\[\[([^]\[]*([^u]|u[^r]|ur[^l])[^=]*[^a]|u[^r]|ur[^l]|r[^l]|l[^=])\]\]\]\])");
+    std::regex h5_pattern(R"(\[\[\[\[\[([^]\[]*([^u]|u[^r]|ur[^l])[^=]*[^a]|u[^r]|ur[^l]|r[^l]|l[^=])\]\]\]\]\])");
+    std::regex h6_pattern(R"(\[\[\[\[\[\[([^]\[]*([^u]|u[^r]|ur[^l])[^=]*[^a]|u[^r]|ur[^l]|r[^l]|l[^=])\]\]\]\]\]\])");
 
     std::smatch match;
 
@@ -76,9 +80,78 @@ std::string regex_toml_table_to_html_heading(std::string current_line) {
     return current_line;
 }
 
-std::string transpile_to_html(std::string current_line){
-    std::string heading = regex_toml_table_to_html_heading(current_line);
-    return heading;
+std::string regex_tp_image_to_html_image_tag(std::string current_line){
+    std::regex img_pattern(R"(\[img=\"([^\"]*[^\\])\"]$)");
+
+    std::smatch match;
+    if (std::regex_match(current_line, match ,img_pattern)){
+        return "<img src=\"" + match[1].str() + "\">";
+    }
+
+    return current_line;
+}
+
+std::string regex_tp_video_to_html_video_tag(std::string current_line){
+    std::regex video_pattern(R"(\[vid=\"([^\"]*[^\\])\"]$)");
+
+    std::smatch match;
+    if (std::regex_match(current_line, match, video_pattern)) {
+        std::string video_src = match[1].str();
+        std::string html_video_tag = "<video controls>\n<source src=\"" + video_src + "\">\nYour Browser does not support html <video> feature.\n</video>";
+
+        return html_video_tag;
+    }
+
+    return current_line;
+}
+
+std::string regex_tp_audio_to_html_audio_tag(std::string current_line){
+    std::regex audio_pattern(R"(\[aud=\"([^\"]*[^\\])\"]$)");
+
+    std::smatch match;
+    if (std::regex_match(current_line, match, audio_pattern)) {
+        std::string video_src = match[1].str();
+        std::string html_video_tag = "<audio controls>\n<source src=\"" + video_src + "\">\nYour Browser does not support html <audio> feature.\n</audio>";
+
+        return html_video_tag;
+    }
+
+    return current_line;
+}
+
+std::string regex_tp_href_to_html_href_tag(std::string current_line){
+    std::regex href_pattern(R"(\[url=\"([^\"]*[^\\])\"]$)");
+
+    std::smatch match;
+    if (std::regex_match(current_line, match ,href_pattern)){
+        std::string href_src = match[1].str();
+        std::string href_tag = "<a href=\"" + href_src + "\">";
+
+        return href_tag;
+    }
+
+    return current_line;
+}
+
+std::string transpile_to_html(std::string current_line) {
+    std::map<std::string, std::string> variables;
+
+    // Define the variables and their corresponding regex functions
+    variables["heading"] = regex_tp_table_to_html_heading(current_line);
+    variables["image"]   = regex_tp_image_to_html_image_tag(current_line);
+    variables["video"]   = regex_tp_video_to_html_video_tag(current_line);
+    variables["audio"]   = regex_tp_audio_to_html_audio_tag(current_line);
+    variables["href"]    = regex_tp_href_to_html_href_tag(current_line);
+
+    // Check for changes and return the variable with changed data
+    for (const auto& [var, value] : variables) {
+        if (value != current_line) {
+            return value;
+        }
+    }
+
+    // No changes detected
+    return "Error";
 }
 
 std::string read_file(std::string file_path) {
