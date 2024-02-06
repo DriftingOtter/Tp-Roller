@@ -135,7 +135,7 @@ std::string regex_tp_href_to_html_href_tag(std::string current_line){
 }
 
 std::string regex_tp_paragraph_to_html_paragraph_tag(std::string current_line) {
-    std::regex paragraph_pattern(R"(^[^\[\]].*$)");
+    std::regex paragraph_pattern(R"(^(?!(~~~|\[url=\"\"|\[vid=\"\"|\[aud=\"\"|\[img=\"\"|\[|\])).*[^[\]].*$)");
 
     std::smatch match;
     if(std::regex_match(current_line, match, paragraph_pattern)) {
