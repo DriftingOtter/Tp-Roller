@@ -11,6 +11,7 @@ std::string regex_tp_image_to_html_image_tag(std::string current_line);
 std::string regex_tp_video_to_html_video_tag(std::string current_line);
 std::string regex_tp_audio_to_html_audio_tag(std::string current_line);
 std::string regex_tp_href_to_html_href_tag(std::string current_line);
+std::string regex_tp_paragraph_to_html_paragraph_tag(std::string current_line);
 std::string transpile_to_html(std::string current_line);
 std::string read_file(std::string file_path);
 
@@ -133,11 +134,26 @@ std::string regex_tp_href_to_html_href_tag(std::string current_line){
     return current_line;
 }
 
+std::string regex_tp_paragraph_to_html_paragraph_tag(std::string current_line) {
+    std::regex paragraph_pattern(R"(^[^\[\]].*$)");
+
+    std::smatch match;
+    if(std::regex_match(current_line, match, paragraph_pattern)) {
+        std::string para_src = match.str();
+        std::string para_tag = "<p>" + para_src + "</p>";
+
+        return para_tag;
+    }
+
+    return current_line;
+}
+
 std::string transpile_to_html(std::string current_line) {
     std::map<std::string, std::string> variables;
 
     // Define the variables and their corresponding regex functions
-    variables["heading"] = regex_tp_table_to_html_heading(current_line);
+    // variables["heading"] = regex_tp_table_to_html_heading(current_line);
+    variables["paragraph"] = regex_tp_paragraph_to_html_paragraph_tag(current_line);
     variables["image"]   = regex_tp_image_to_html_image_tag(current_line);
     variables["video"]   = regex_tp_video_to_html_video_tag(current_line);
     variables["audio"]   = regex_tp_audio_to_html_audio_tag(current_line);
@@ -150,8 +166,7 @@ std::string transpile_to_html(std::string current_line) {
         }
     }
 
-    // No changes detected
-    return "Error";
+    return current_line;
 }
 
 std::string read_file(std::string file_path) {
