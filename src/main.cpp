@@ -6,12 +6,13 @@
 
 int check_for_toml (std::string file_path);
 int check_args (int argc, char* argv[]);
-std::string regex_tp_table_to_html_heading(std::string current_line);
+std::string regex_tp_heading_to_html_heading(std::string current_line);
 std::string regex_tp_image_to_html_image_tag(std::string current_line);
 std::string regex_tp_video_to_html_video_tag(std::string current_line);
 std::string regex_tp_audio_to_html_audio_tag(std::string current_line);
 std::string regex_tp_href_to_html_href_tag(std::string current_line);
 std::string regex_tp_paragraph_to_html_paragraph_tag(std::string current_line);
+std::string regex_tp_code_to_html_code_tag(std::string current_line);
 std::string transpile_to_html(std::string current_line);
 std::string read_file(std::string file_path);
 
@@ -54,7 +55,7 @@ int check_args (int argc, char* argv[]){
     return 0;
 }
 
-std::string regex_tp_table_to_html_heading(std::string current_line) {
+std::string regex_tp_heading_to_html_heading(std::string current_line) {
     std::regex h1_pattern(R"(\[([^]\[]*([^u]|u[^r]|ur[^l])[^=]*[^a]|u[^r]|ur[^l]|r[^l]|l[^=])\])");
     std::regex h2_pattern(R"(\[\[([^]\[]*([^u]|u[^r]|ur[^l])[^=]*[^a]|u[^r]|ur[^l]|r[^l]|l[^=])\]\])");
     std::regex h3_pattern(R"(\[\[\[([^]\[]*([^u]|u[^r]|ur[^l])[^=]*[^a]|u[^r]|ur[^l]|r[^l]|l[^=])\]\]\])");
@@ -148,31 +149,65 @@ std::string regex_tp_paragraph_to_html_paragraph_tag(std::string current_line) {
     return current_line;
 }
 
-std::string transpile_to_html(std::string current_line) {
-    std::map<std::string, std::string> variables;
+std::string regex_tp_code_to_html_code_tag(std::string current_line) {
+    std::regex code_block_start_pattern("(^|[^~])~~~(\\s*[^~]+)");
+    std::regex code_block_end_pattern("(^|[^~])~~~(?![~\\s])");
 
-    // Define the variables and their corresponding regex functions
-    // variables["heading"] = regex_tp_table_to_html_heading(current_line);
-    variables["paragraph"] = regex_tp_paragraph_to_html_paragraph_tag(current_line);
-    variables["image"]   = regex_tp_image_to_html_image_tag(current_line);
-    variables["video"]   = regex_tp_video_to_html_video_tag(current_line);
-    variables["audio"]   = regex_tp_audio_to_html_audio_tag(current_line);
-    variables["href"]    = regex_tp_href_to_html_href_tag(current_line);
-
-    // Check for changes and return the variable with changed data
-    for (const auto& [var, value] : variables) {
-        if (value != current_line) {
-            return value;
-        }
+    std::smatch match;
+    if(std::regex_search(current_line, match, code_block_start_pattern)) {
+        return "<code>";
+    } else if (std::regex_search(current_line, match, code_block_end_pattern)) {
+        return "</code>";
     }
 
     return current_line;
+}
+
+std::string transpile_to_html(std::string current_line) {
+    static bool in_code_block = false;
+    static std::string accumulated_result;
+
+    if (!in_code_block) {
+        if (current_line.find("~~~") != std::string::npos) {
+            in_code_block = true;
+            return "<code>";
+        }
+        else {
+            std::map<std::string, std::string (*)(std::string)> variables;
+            variables["heading"] = regex_tp_heading_to_html_heading;
+            variables["paragraph"] = regex_tp_paragraph_to_html_paragraph_tag;
+            variables["image"] = regex_tp_image_to_html_image_tag;
+            variables["video"] = regex_tp_video_to_html_video_tag;
+            variables["audio"] = regex_tp_audio_to_html_audio_tag;
+            variables["href"] = regex_tp_href_to_html_href_tag;
+
+            for (const auto& pair : variables) {
+                std::string value = pair.second(current_line);
+                if (value != current_line) {
+                    return value;
+                }
+            }
+            return current_line;
+        }
+    } else {
+        if (current_line.find("~~~") != std::string::npos) {
+            in_code_block = false;
+            std::string result = "</code>";
+            accumulated_result.clear();
+            return result;
+        } else {
+            accumulated_result += current_line;
+            return current_line;
+        }
+    }
 }
 
 std::string read_file(std::string file_path) {
     std::string buff;
     std::string file_data;
     std::ifstream ReadFile(file_path);
+
+    int code_block_signal = 0;
 
     if (!ReadFile.is_open()) {
         throw std::logic_error("Error: Could not open file " + file_path);
