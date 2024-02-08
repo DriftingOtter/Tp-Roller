@@ -1,8 +1,10 @@
-[My Page Title]
+[
+title    = My page
 author   = John Doe
 date     = 2024-02-03
 time     = 1:23:45 AM
 location = India
+]
 
 [[Chapter 1]]
 

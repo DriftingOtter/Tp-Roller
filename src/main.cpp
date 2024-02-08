@@ -13,6 +13,8 @@ std::string regex_tp_audio_to_html_audio_tag(std::string current_line);
 std::string regex_tp_href_to_html_href_tag(std::string current_line);
 std::string regex_tp_paragraph_to_html_paragraph_tag(std::string current_line);
 std::string regex_tp_code_to_html_code_tag(std::string current_line);
+std::string regex_tp_table_column_to_html_code_table(std::string current_line);
+std::string regex_tp_table_row_to_html(std::string current_line);
 std::string transpile_to_html(std::string current_line);
 std::string read_file(std::string file_path);
 
@@ -163,43 +165,102 @@ std::string regex_tp_code_to_html_code_tag(std::string current_line) {
     return current_line;
 }
 
+std::string regex_tp_table_colomn_to_html(std::string colomn_data) {
+    std::string html; // HTML to return
+
+    // Extract row data and convert to HTML table cells
+    std::istringstream colomn_stream(colomn_data);
+    std::string cell_data;
+    while (std::getline(colomn_stream, cell_data, ',')) {
+        html += "<td>" + cell_data + "</td>\n";
+    }
+
+    return html;
+}
+
+std::string regex_tp_table_row_to_html(std::string current_line) {
+    std::string html; // HTML to return
+
+    std::regex table_row_pattern(R"(^\w+\s*=\s*\{([0-9a-zA-Z,\s]*)\})");
+    std::smatch match;
+
+    if (std::regex_search(current_line, match, table_row_pattern)) {
+        // Extract row data and convert to HTML table row
+        std::string row_data = match[1].str();
+        html += "<tr>\n"; // Open row tag
+        html += regex_tp_table_colomn_to_html(row_data); // Convert row data to HTML table cells
+        html += "</tr>\n"; // Close row tag
+    }
+
+    return html;
+}
+
+std::string regex_tp_table_column_to_html_code_table(std::string current_line) {
+    static bool in_table = false;
+    std::regex table_colomn_pattern(R"(^(\w+)\s*=\s*\{([0-9a-zA-Z,\s]*)\})");
+    std::string html; 
+
+    std::smatch match;
+    if (std::regex_search(current_line, match, table_colomn_pattern)) {
+        if (!in_table) {
+            in_table = true;
+            html += "<table>\n";
+        }
+
+        html += regex_tp_table_row_to_html(current_line);
+    } else {
+        if (in_table) {
+            html += "</table>\n";
+            in_table = false;
+        }
+    }
+
+    return html;
+}
+
 std::string transpile_to_html(std::string current_line) {
     static bool in_code_block = false;
     static std::string accumulated_result;
 
-    if (!in_code_block) {
-        if (current_line.find("~~~") != std::string::npos) {
-            in_code_block = true;
-            return "<code>";
-        }
-        else {
-            std::map<std::string, std::string (*)(std::string)> variables;
-            variables["heading"] = regex_tp_heading_to_html_heading;
-            variables["paragraph"] = regex_tp_paragraph_to_html_paragraph_tag;
-            variables["image"] = regex_tp_image_to_html_image_tag;
-            variables["video"] = regex_tp_video_to_html_video_tag;
-            variables["audio"] = regex_tp_audio_to_html_audio_tag;
-            variables["href"] = regex_tp_href_to_html_href_tag;
+    if (!in_code_block && current_line.find("~~~") != std::string::npos) {
+        in_code_block = true;
+        return "<code>";
+    }
 
-            for (const auto& pair : variables) {
-                std::string value = pair.second(current_line);
-                if (value != current_line) {
-                    return value;
-                }
-            }
-            return current_line;
-        }
-    } else {
-        if (current_line.find("~~~") != std::string::npos) {
-            in_code_block = false;
-            std::string result = "</code>";
-            accumulated_result.clear();
-            return result;
-        } else {
-            accumulated_result += current_line;
-            return current_line;
+    if (in_code_block && current_line.find("~~~") != std::string::npos) {
+        in_code_block = false;
+        std::string result = "</code>";
+        accumulated_result.clear();
+        return result;
+    }
+
+    if (in_code_block) {
+        accumulated_result += current_line;
+        return current_line;
+    }
+
+    std::string table_html = regex_tp_table_column_to_html_code_table(current_line);
+    if (!table_html.empty()) {
+        return table_html;
+    }
+
+    // Process other types of elements
+    std::map<std::string, std::string (*)(std::string)> variables;
+    variables["heading"] = regex_tp_heading_to_html_heading;
+    variables["paragraph"] = regex_tp_paragraph_to_html_paragraph_tag;
+    variables["image"] = regex_tp_image_to_html_image_tag;
+    variables["video"] = regex_tp_video_to_html_video_tag;
+    variables["audio"] = regex_tp_audio_to_html_audio_tag;
+    variables["href"] = regex_tp_href_to_html_href_tag;
+
+    for (const auto& pair : variables) {
+        std::string value = pair.second(current_line);
+        if (value != current_line) {
+            return value;
         }
     }
+
+    return current_line;
 }
 
 std::string read_file(std::string file_path) {
