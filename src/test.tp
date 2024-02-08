@@ -1,9 +1,10 @@
 [
-title    = My page
-author   = John Doe
-date     = 2024-02-03
-time     = 1:23:45 AM
-location = India
+title       = My page
+author      = Author
+description = My Webpage
+charset     = UTF-8
+copyright   = "2055"
+favicon     = "~/path/to/file.png"
 ]
 
 [[Chapter 1]]
