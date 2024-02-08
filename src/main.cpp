@@ -13,7 +13,7 @@ std::string regex_tp_audio_to_html_audio_tag(std::string current_line);
 std::string regex_tp_href_to_html_href_tag(std::string current_line);
 std::string regex_tp_paragraph_to_html_paragraph_tag(std::string current_line);
 std::string regex_tp_code_to_html_code_tag(std::string current_line);
-std::string regex_tp_table_column_to_html_code_table(std::string current_line);
+std::string regex_tp_table_column_to_html_table_tag(std::string current_line);
 std::string regex_tp_table_row_to_html(std::string current_line);
 std::string transpile_to_html(std::string current_line);
 std::string read_file(std::string file_path);
@@ -195,7 +195,7 @@ std::string regex_tp_table_row_to_html(std::string current_line) {
     return html;
 }
 
-std::string regex_tp_table_column_to_html_code_table(std::string current_line) {
+std::string regex_tp_table_column_to_html_table_tag(std::string current_line) {
     static bool in_table = false;
     std::regex table_colomn_pattern(R"(^(\w+)\s*=\s*\{([0-9a-zA-Z,\s]*)\})");
     std::string html; 
@@ -218,8 +218,60 @@ std::string regex_tp_table_column_to_html_code_table(std::string current_line) {
     return html;
 }
 
+std::string regex_tp_unordered_list_to_html(std::string current_line, bool& in_list) {
+    std::string html; // HTML to return
+
+    std::regex unordered_list_pattern(R"(^\-\s+(.+)$)");
+    std::smatch match;
+
+    if (std::regex_search(current_line, match, unordered_list_pattern)) {
+        if (!in_list) {
+            in_list = true;
+            html += "<ul>\n"; // Open unordered list tag
+        }
+        html += "<li>" + match[1].str() + "</li>\n"; // Convert list item to HTML list item
+    }
+
+    return html;
+}
+
+std::string regex_tp_numbered_list_to_html(std::string current_line, bool& in_list) {
+    std::string html; // HTML to return
+
+    std::regex numbered_list_pattern(R"(^\d+\.\s+(.+)$)");
+    std::smatch match;
+
+    if (std::regex_search(current_line, match, numbered_list_pattern)) {
+        if (!in_list) {
+            in_list = true;
+            html += "<ol>\n"; // Open ordered list tag
+        }
+        html += "<li>" + match[1].str() + "</li>\n"; // Convert list item to HTML list item
+    }
+
+    return html;
+}
+
+std::string regex_tp_alphabetical_list_to_html(std::string current_line, bool& in_list) {
+    std::string html; // HTML to return
+
+    std::regex alphabetical_list_pattern(R"(^[a-z]\.\s+(.+)$)");
+    std::smatch match;
+
+    if (std::regex_search(current_line, match, alphabetical_list_pattern)) {
+        if (!in_list) {
+            in_list = true;
+            html += "<ol type=\"a\">\n"; // Open ordered list tag with type "a"
+        }
+        html += "<li>" + match[1].str() + "</li>\n"; // Convert list item to HTML list item
+    }
+
+    return html;
+}
+
 std::string transpile_to_html(std::string current_line) {
     static bool in_code_block = false;
+    static bool in_list = false;
     static std::string accumulated_result;
 
     if (!in_code_block && current_line.find("~~~") != std::string::npos) {
@@ -239,7 +291,29 @@ std::string transpile_to_html(std::string current_line) {
         return current_line;
     }
 
-    std::string table_html = regex_tp_table_column_to_html_code_table(current_line);
+    std::string list_html;
+
+    list_html = regex_tp_unordered_list_to_html(current_line, in_list);
+    if (!list_html.empty()) {
+        return list_html;
+    }
+
+    list_html = regex_tp_numbered_list_to_html(current_line, in_list);
+    if (!list_html.empty()) {
+        return list_html;
+    }
+
+    list_html = regex_tp_alphabetical_list_to_html(current_line, in_list);
+    if (!list_html.empty()) {
+        return list_html;
+    }
+
+    if (in_list && current_line.empty()) {
+        in_list = false;
+        return "</ul>\n</ol>\n"; // Close list tags
+    }
+
+    std::string table_html = regex_tp_table_column_to_html_table_tag(current_line);
     if (!table_html.empty()) {
         return table_html;
     }
