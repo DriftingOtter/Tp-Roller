@@ -27,12 +27,12 @@ int check_args(int argc, char* argv[]) {
 
 std::string regex_tp_heading_to_html_heading(std::string current_line) {
     // Heading regex patterns
-    std::regex h1_pattern(R"(\[([^]\[]*([^u]|u[^r]|ur[^l])[^=]*[^a]|u[^r]|ur[^l]|r[^l]|l[^=])\])");
-    std::regex h2_pattern(R"(\[\[([^]\[]*([^u]|u[^r]|ur[^l])[^=]*[^a]|u[^r]|ur[^l]|r[^l]|l[^=])\]\])");
-    std::regex h3_pattern(R"(\[\[\[([^]\[]*([^u]|u[^r]|ur[^l])[^=]*[^a]|u[^r]|ur[^l]|r[^l]|l[^=])\]\]\])");
-    std::regex h4_pattern(R"(\[\[\[\[([^]\[]*([^u]|u[^r]|ur[^l])[^=]*[^a]|u[^r]|ur[^l]|r[^l]|l[^=])\]\]\]\])");
-    std::regex h5_pattern(R"(\[\[\[\[\[([^]\[]*([^u]|u[^r]|ur[^l])[^=]*[^a]|u[^r]|ur[^l]|r[^l]|l[^=])\]\]\]\]\])");
-    std::regex h6_pattern(R"(\[\[\[\[\[\[([^]\[]*([^u]|u[^r]|ur[^l])[^=]*[^a]|u[^r]|ur[^l]|r[^l]|l[^=])\]\]\]\]\]\])");
+    std::regex h1_pattern(R"(\[([^[\]]*)\])");
+    std::regex h2_pattern(R"(\[\[([^[\]]*)\]\])");
+    std::regex h3_pattern(R"(\[\[\[([^[\]]*)\]\]\])");
+    std::regex h4_pattern(R"(\[\[\[\[([^[\]]*)\]\]\]\])");
+    std::regex h5_pattern(R"(\[\[\[\[\[([^[\]]*)\]\]\]\]\])");
+    std::regex h6_pattern(R"(\[\[\[\[\[\[([^[\]]*)\]\]\]\]\]\])");
 
     std::smatch match;
 
@@ -137,7 +137,7 @@ std::string regex_tp_code_to_html_code_tag(std::string current_line) {
         return "</code>";
     }
 
-    return current_line;
+    return "";
 }
 
 std::string regex_tp_table_colomn_to_html(std::string colomn_data) {
@@ -261,13 +261,91 @@ std::string regex_tp_alphabetical_list_to_html(std::string current_line, bool& i
     return html;
 }
 
+std::string regex_tp_preamble_to_html_metadata(std::string current_line) {
+    std::regex title_pattern(R"(^title\s*=\s*(.+)$)");
+    std::regex author_pattern(R"(^author\s*=\s*(.+)$)");
+    std::regex description_pattern(R"(^description\s*=\s*(.+)$)");
+    std::regex lang_pattern(R"(^language\s*=\s*(.+)$)");
+    std::regex charset_pattern(R"(^charset\s*=\s*(.+)$)");
+    std::regex favicon_pattern(R"(^favicon\s*=\s*\"([^"]*)\"$)");
+
+    std::smatch match;
+    if (std::regex_search(current_line, match, title_pattern)) {
+        return "<title>" + match[1].str() + "</title>\n";
+    } else if (std::regex_search(current_line, match, author_pattern)) {
+        return "<meta name=\"author\" content=\"" + match[1].str() + "\">\n";
+    } else if (std::regex_search(current_line, match, description_pattern)) {
+        return "<meta name=\"description\" content=\"" + match[1].str() + "\">\n";
+    } else if (std::regex_search(current_line, match, lang_pattern)) {
+        std::string lang_attribute = match[1].str().substr(0, 3); // Take first three letters
+        std::transform(lang_attribute.begin(), lang_attribute.end(), lang_attribute.begin(), ::tolower); // Convert to lowercase
+        return "<html lang=\"" + lang_attribute + "\">\n";
+    } else if (std::regex_search(current_line, match, charset_pattern)) {
+        return "<meta charset=\"" + match[1].str() + "\">\n";
+    } else if (std::regex_search(current_line, match, favicon_pattern)) {
+        return "<link rel=\"icon\" href=\"" + match[1].str() + "\">\n";
+    } else {
+        return ""; // Return empty string for non-metadata lines
+    }
+}
+
+std::string transpile_line_to_html_element(const std::string& current_line) {
+    // Define a map of regex patterns and corresponding HTML transformation functions
+    std::map<std::string, std::function<std::string(const std::string&)>> element_map = {
+        {"image", regex_tp_image_to_html_image_tag},
+        {"video", regex_tp_video_to_html_video_tag},
+        {"audio", regex_tp_audio_to_html_audio_tag},
+        {"href", regex_tp_href_to_html_href_tag},
+        {"paragraph", regex_tp_paragraph_to_html_paragraph_tag},
+        {"heading", regex_tp_heading_to_html_heading},
+    };
+
+    for (const auto& pair : element_map) {
+        std::string element_type = pair.first;
+        std::string html_output = pair.second(current_line);
+        if (html_output != current_line) {
+            // Return the HTML output if the line matches the pattern
+            return html_output;
+        }
+    }
+
+    return current_line;
+}
+
 std::string transpile_to_html(std::string current_line) {
+    // Define static variables to track state
     static bool in_code_block = false;
     static bool in_unordered_list = false;
     static bool in_numbered_list = false;
     static bool in_alphabetical_list = false;
-    static std::string accumulated_result;
+    static bool in_preamble = false;
+    static std::string accumulated_code;
+    static std::string accumulated_preamble;
 
+    // Handle preamble processing
+    if (!in_preamble && current_line.find("<<<") != std::string::npos) {
+        in_preamble = true;
+        return ""; // Skip the <<< line
+    }
+
+    if (in_preamble && current_line.find(">>>") != std::string::npos) {
+        in_preamble = false;
+        std::string result = "<!DOCTYPE=html>\n<head>\n" + accumulated_preamble + "</head>\n<body>\n";
+        accumulated_preamble.clear();
+        return result;
+    }
+
+    if (in_preamble) {
+        accumulated_preamble += "\t" + regex_tp_preamble_to_html_metadata(current_line);
+        return "";
+    }
+
+    // If in the preamble, skip processing other elements
+    if (in_preamble) {
+        return "";
+    }
+
+    // Handle code block processing
     if (!in_code_block && current_line.find("~~~") != std::string::npos) {
         in_code_block = true;
         return "<code>";
@@ -275,16 +353,17 @@ std::string transpile_to_html(std::string current_line) {
 
     if (in_code_block && current_line.find("~~~") != std::string::npos) {
         in_code_block = false;
-        std::string result = "</code>";
-        accumulated_result.clear();
-        return result;
+        std::string result = accumulated_code;
+        accumulated_code.clear();
+        return result + "</code>";
     }
 
     if (in_code_block) {
-        accumulated_result += current_line;
-        return current_line;
+        accumulated_code += current_line + "\n";
+        return "";
     }
 
+    // Handle list processing
     std::string list_html;
 
     list_html = regex_tp_unordered_list_to_html(current_line, in_unordered_list);
@@ -302,41 +381,9 @@ std::string transpile_to_html(std::string current_line) {
         return list_html;
     }
 
-    if (!in_unordered_list && !in_numbered_list && !in_alphabetical_list && current_line.empty()) {
-        // Close any open list tags
-        std::string closing_tags;
-        if (in_unordered_list) {
-            closing_tags += "</ul>\n";
-            in_unordered_list = false;
-        }
-        if (in_numbered_list) {
-            closing_tags += "</ol>\n";
-            in_numbered_list = false;
-        }
-        if (in_alphabetical_list) {
-            closing_tags += "</ol>\n";
-            in_alphabetical_list = false;
-        }
-        return closing_tags;
-    }
-
-    // Process other types of elements
-    std::map<std::string, std::string (*)(std::string)> variables;
-    variables["heading"] = regex_tp_heading_to_html_heading;
-    variables["paragraph"] = regex_tp_paragraph_to_html_paragraph_tag;
-    variables["image"] = regex_tp_image_to_html_image_tag;
-    variables["video"] = regex_tp_video_to_html_video_tag;
-    variables["audio"] = regex_tp_audio_to_html_audio_tag;
-    variables["href"] = regex_tp_href_to_html_href_tag;
-
-    for (const auto& pair : variables) {
-        std::string value = pair.second(current_line);
-        if (value != current_line) {
-            return value;
-        }
-    }
-
-    return current_line;
+    // Handle other HTML elements
+    std::string html_output = transpile_line_to_html_element(current_line);
+    return html_output.empty() ? current_line : html_output;
 }
 
 std::string read_file(std::string file_path) {
@@ -351,7 +398,8 @@ std::string read_file(std::string file_path) {
     while (std::getline(ReadFile, buff)) {
         file_data += transpile_to_html(buff) + "\n";
     }
-    std::cout << file_data << std::endl;
+    file_data += "</body>\n</html>";
 
+    std::cout << file_data << std::endl;
     return file_data;
 }
