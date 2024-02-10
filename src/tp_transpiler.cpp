@@ -98,7 +98,7 @@ std::string regex_tp_audio_to_html_audio_tag(std::string current_line) {
 }
 
 std::string regex_tp_href_to_html_href_tag(std::string current_line) {
-    std::regex href_pattern(R"(\[url=\"([^\"]*[^\\])\"]$)");
+    std::regex href_pattern(R"(\[url\s*=\s*\"([^\"]*[^\\])\"]$)");
 
     std::smatch match;
     if (std::regex_match(current_line, match, href_pattern)) {
@@ -319,6 +319,7 @@ std::string transpile_to_html(std::string current_line) {
     static bool in_numbered_list = false;
     static bool in_alphabetical_list = false;
     static bool in_preamble = false;
+    static bool in_table = false; // Add this line to track table state
     static std::string accumulated_code;
     static std::string accumulated_preamble;
 
@@ -379,6 +380,13 @@ std::string transpile_to_html(std::string current_line) {
     list_html = regex_tp_alphabetical_list_to_html(current_line, in_alphabetical_list);
     if (!list_html.empty()) {
         return list_html;
+    }
+
+    // Handle table processing
+    std::string table_html;
+    table_html = regex_tp_table_column_to_html_table_tag(current_line); // Check if line starts or ends a table
+    if (!table_html.empty()) {
+        return table_html;
     }
 
     // Handle other HTML elements
