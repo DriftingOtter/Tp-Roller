@@ -20,7 +20,7 @@ std::string regex_tp_video_to_html_video_tag(std::string current_line);
 std::string regex_tp_audio_to_html_audio_tag(std::string current_line);
 std::string regex_tp_href_to_html_href_tag(std::string current_line);
 std::string regex_tp_paragraph_to_html_paragraph_tag(std::string current_line);
-std::string regex_tp_code_to_html_code_tag(std::string current_line);
+std::string regex_tp_code_to_html_code_tag(std::string current_line, bool& in_code_block);
 std::string regex_tp_table_column_to_html_table_tag(std::string current_line);
 std::string regex_tp_table_row_to_html(std::string current_line);
 std::string regex_tp_unordered_list_to_html(std::string current_line, bool &in_unordered_list);

@@ -130,19 +130,6 @@ std::string regex_tp_paragraph_to_html_paragraph_tag(std::string current_line) {
   return current_line;
 }
 
-std::string regex_tp_code_to_html_code_tag(std::string current_line) {
-  std::regex code_block_start_pattern("(^|[^~])~~~(\\s*[^~]+)");
-  std::regex code_block_end_pattern("(^|[^~])~~~(?![~\\s])");
-
-  std::smatch match;
-  if (std::regex_search(current_line, match, code_block_start_pattern)) {
-    return "<code>";
-  } else if (std::regex_search(current_line, match, code_block_end_pattern)) {
-    return "</code>";
-  }
-
-  return "";
-}
 
 std::string regex_tp_table_colomn_to_html(std::string colomn_data) {
   std::string html;
@@ -298,8 +285,6 @@ std::string regex_tp_preamble_to_html_metadata(std::string current_line) {
 }
 
 std::string transpile_line_to_html_element(const std::string& current_line) {
-  // Define a map of regex patterns and corresponding HTML transformation
-  // functions
   std::map<std::string, std::function<std::string(const std::string&)>>
       element_map = {
           {"image", regex_tp_image_to_html_image_tag},
@@ -321,6 +306,24 @@ std::string transpile_line_to_html_element(const std::string& current_line) {
   return current_line;
 }
 
+std::string regex_tp_code_to_html_code_tag(std::string current_line,
+    bool& in_code_block) {
+  std::regex code_block_pattern(R"(^(\s*~~~)(\s*)$)");
+
+  std::smatch match;
+  if (std::regex_search(current_line, match, code_block_pattern)) {
+    return "<code>";
+  }
+  if (in_code_block) {
+    return current_line + "\n";
+  }
+  if (std::regex_search(current_line, match, code_block_pattern)) {
+    return "</code>";
+  }
+
+  return "";
+}
+
 std::string process_preamble(std::string current_line,
                              bool& in_preamble,
                              std::string& accumulated_preamble) {
@@ -339,29 +342,6 @@ std::string process_preamble(std::string current_line,
 
   if (in_preamble) {
     accumulated_preamble += regex_tp_preamble_to_html_metadata(current_line);
-    return "";
-  }
-
-  return "";
-}
-
-std::string process_code_block(std::string current_line,
-                               bool& in_code_block,
-                               std::string& accumulated_code) {
-  if (!in_code_block && current_line.find("~~~") != std::string::npos) {
-    in_code_block = true;
-    return "<code>";
-  }
-
-  if (in_code_block && current_line.find("~~~") != std::string::npos) {
-    in_code_block = false;
-    std::string result = accumulated_code;
-    accumulated_code.clear();
-    return result + "</code>";
-  }
-
-  if (in_code_block) {
-    accumulated_code += current_line + "\n";
     return "";
   }
 
@@ -416,7 +396,6 @@ std::string transpile_to_html(std::string& current_line) {
   static bool in_alphabetical_list = false;
   static bool in_preamble = false;
   static bool in_table = false;
-  static std::string accumulated_code;
   static std::string accumulated_preamble;
 
   std::string result;
@@ -425,9 +404,9 @@ std::string transpile_to_html(std::string& current_line) {
   if (!result.empty()) {
     return result;
   }
-  result = process_code_block(current_line, in_code_block, accumulated_code);
-  if (!result.empty()) {
-    return result;
+  result = regex_tp_code_to_html_code_tag(current_line, in_code_block);
+  if (in_code_block){
+    return "";
   }
   result = process_lists(current_line, in_unordered_list, in_numbered_list,
                          in_alphabetical_list);
@@ -438,12 +417,18 @@ std::string transpile_to_html(std::string& current_line) {
   if (!result.empty()) {
     return result;
   }
+  
+  result = process_other_html_elements(current_line);
+  if (!result.empty()){
+    return result;
+  }
 
-  return process_other_html_elements(current_line);
+  return "";
 }
 
 std::string read_file(std::string& file_path) {
   std::string buff;
+  std::string inter_buff;
   std::string file_data;
   std::ifstream ReadFile(file_path);
 
@@ -452,7 +437,13 @@ std::string read_file(std::string& file_path) {
   }
 
   while (std::getline(ReadFile, buff)) {
-    file_data += transpile_to_html(buff) + "\n";
+    inter_buff = transpile_to_html(buff);
+
+    if (inter_buff == "\n") {
+      continue;
+    } else {
+      file_data += transpile_to_html(buff) + "\n";
+    }
   }
   file_data += "</body>\n</html>";
 
